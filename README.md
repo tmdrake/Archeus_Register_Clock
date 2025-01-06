@@ -1,5 +1,5 @@
 # Archeus_Register_Clock
- Driver and Clock for a mechanical tele-register clock.
+Driver and Clock for a mechanical tele-register clock.
 
 See video: https://www.youtube.com/watch?v=ujtkTZA01rc
 

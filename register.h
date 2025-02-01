@@ -7,6 +7,7 @@ class Register {
   private:
     byte _A_Pin; // Pin for Trigger
     byte _B_Pin; // Pin for Reset
+    int lastnumber; //for last number
 
     //For async checking
     bool _isBusy = false;

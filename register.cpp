@@ -7,6 +7,7 @@ Register::Register(byte A_Pin, byte B_Pin) {
   digitalWrite(B_Pin, LOW);
   _A_Pin = A_Pin;
   _B_Pin = B_Pin;
+  lastnumber = -1;
 }
 
 void Register::reset() {
@@ -25,16 +26,17 @@ void Register::reset() {
 
 void Register::countto(int counto) {
 //figure out the last number, then count to it... otherwise reset and count
-static int lastnumber = -1;
-  //Serial.print("Last number was ");
-  //Serial.println(lastnumber);
+//static int lastnumber = -1;
+Serial.print("Last number:");
+Serial.println(lastnumber);
+
 if (counto <= 0)
     counto = 10; //Zero is actually 10
-if (counto > 9)
-    counto = 10; //also zero
+//else if (counto > 9)
+//    counto = 10; //also zero
 
 if (lastnumber == counto){
-  //Serial.println("Nothing to do.");
+  //Serial.println("Nothing to do.");s
   return;
 } else if(lastnumber < counto && lastnumber != -1)
 {
@@ -42,7 +44,7 @@ if (lastnumber == counto){
   // New count is just the difference..
   int difference = counto - lastnumber;
   
-  //Serial.print("Move foward ");
+  Serial.print("Move foward:");
   Serial.println(difference);
   lastnumber = counto;
   counto = difference; //to be processed

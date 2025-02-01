@@ -4,6 +4,10 @@
 * Will be using an Arduino MEGA due to the amount of IO lines
 * TODO: Add sync to Second com port, allow to interact with ESP8266
 */
+/**Need a way store and retrieve from eeprom***/
+#include <EEPROMex.h>
+#include "Arduino.h"
+
 
 /*Needed to use non blocking delays*/
 #include "Timer.h"
@@ -14,6 +18,8 @@ Timer t;
 #include <Wire.h>
 #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
+#define OFFSET_HEADER  "0"   // Header tag for serial time sync message
+
 
 /*
   Output with Registors
@@ -28,7 +34,7 @@ Register sec_10(51,50); //10's place sec
 Register sec_1(53,52); //1's place sec
 
 //offset
-const int offset = -8;  // Pacific Standard Time (USA)
+int offset = -8;  // Pacific Standard Time (USA)
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -51,6 +57,12 @@ void setup() {
   else
      Serial.println("RTC has set the system time.");  
 
+  /*Get offset from EEPROM*/
+  offset = EEPROM.readInt(10);
+  if (offset > 12 || offset <-12 )
+    offset = -8; //PST
+
+  /*Clock service*/
   t.every(1000, digitalClockDisplay);
 
 }

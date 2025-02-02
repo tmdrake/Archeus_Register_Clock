@@ -2,8 +2,12 @@
 * Teleregister clock driver, Used in building a clock.
 * currently non async library.
 * Will be using an Arduino MEGA due to the amount of IO lines
-* TODO: Add sync to Second com port, allow to interact with ESP8266
+* 
 */
+#if !defined(__AVR_ATmega2560__)
+#error This code is designed to run on Arduino MEGA boards
+#endif
+
 /**Need a way store and retrieve from eeprom***/
 #include <EEPROMex.h>
 #include "Arduino.h"
@@ -18,7 +22,7 @@ Timer t;
 #include <Wire.h>
 #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
-#define OFFSET_HEADER  "0"   // Header tag for serial time sync message
+#define OFFSET_HEADER  "O"   // Header tag for serial time sync message
 
 
 /*
@@ -40,7 +44,7 @@ int offset = -8;  // Pacific Standard Time (USA)
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   Serial.begin(115200);
-  //Serial1.begin(115200);
+  Serial1.begin(115200); //for time sync messages on WIFI
   pinMode(LED_BUILTIN, OUTPUT);
   //Reset
   Serial.println("Reseting Registers...");
@@ -58,9 +62,9 @@ void setup() {
      Serial.println("RTC has set the system time.");  
 
   /*Get offset from EEPROM*/
-  offset = EEPROM.readInt(10);
-  if (offset > 12 || offset <-12 )
-    offset = -8; //PST
+  //offset = EEPROM.readInt(10);
+  //if (offset > 12 || offset <-12 )
+  //  offset = -8; //PST
 
   /*Clock service*/
   t.every(1000, digitalClockDisplay);
@@ -71,13 +75,30 @@ void setup() {
 void loop() {
   t.update(); //timer service
 
+
+
   if (Serial.available()) {
+    /*Menu and Sync processing*/
     time_t t = processSyncMessage();
+    /*Time sync Processing*/
     if (t != 0) {
       //adjustTime(offset * SECS_PER_HOUR);
       t = t + offset * SECS_PER_HOUR;
       RTC.set(t);   // set the RTC and the system time to the received value
-      setTime(t);          
+      setTime(t);   //While on the system uses timer library       
+    }
+  }
+
+  if (Serial1.available()) {
+    /*No menu but look for UNIXTIME*/
+    time_t t = processSyncMessage_1();
+
+    /*Time sync Processing*/
+    if (t != 0) {
+      //adjustTime(offset * SECS_PER_HOUR);
+      t = t + offset * SECS_PER_HOUR;
+      RTC.set(t);   // set the RTC and the system time to the received value
+      setTime(t);   //While on the system uses timer library       
     }
   }
 
@@ -119,16 +140,16 @@ if (timeStatus()!= timeNotSet) {
   Serial.println("S01:");
   sec_1.countto(second() % 10);
 
-
-  /*
-  Serial.print(" ");
+  /*Date*/
+  Serial.print("Current Date:");
   Serial.print(day());
-  Serial.print(" ");
+  Serial.print("/");
   Serial.print(month());
-  Serial.print(" ");
+  Serial.print("/");
   Serial.print(year()); 
   Serial.println(); 
-  */
+
+
 }
 
 }
@@ -143,9 +164,41 @@ void printDigits(int digits){
 
 
 unsigned long processSyncMessage() {
+  /*T<UNIXTIME>
+    O<OFFSET>
+    Offset should probably be sent first then time
+    TODO: RECIEVE THE SAME INFORMATION ON COM2 WHERE WIFI is at
+    */
   unsigned long pctime = 0L;
   const unsigned long DEFAULT_TIME = 1357041600; // Jan 1 2013 
-  Serial.println("Recieved Time Set Command!");
+
+  int buff = Serial.read();
+  if (buff == 'T' ){
+     pctime = Serial.parseInt();
+     //return pctime;
+     if( pctime < DEFAULT_TIME) { // check the value is a valid time (greater than Jan 1 2013)
+       pctime = 0L; // return 0 to indicate that the time is not valid
+     }
+  } else if (buff == 'O' ) {
+    /*Process offset*/
+    offset = Serial.parseInt();
+    Serial.print("Offset:");
+    Serial.println(offset);
+
+  } else if (buff == '?') {
+    Serial.println("MENU:");
+    Serial.println("T<UNIXTIME>");
+    Serial.println("O<OFFSET>");
+    
+
+  }
+
+
+
+/*
+  unsigned long pctime = 0L;
+  const unsigned long DEFAULT_TIME = 1357041600; // Jan 1 2013 
+  //Serial.println("Recieved Time Set Command!");
   if(Serial.find(TIME_HEADER)) {
      pctime = Serial.parseInt();
      return pctime;
@@ -153,8 +206,25 @@ unsigned long processSyncMessage() {
        pctime = 0L; // return 0 to indicate that the time is not valid
      }
   }
+*/
+
   return pctime;
 }
 
 
+unsigned long processSyncMessage_1() {
+
+  unsigned long pctime = 0L;
+  const unsigned long DEFAULT_TIME = 1357041600; // Jan 1 2013 
+  
+  if(Serial1.find(TIME_HEADER)) {
+    Serial.println("*********Recieved Time on WIFI!");
+     pctime = Serial1.parseInt();
+     //return pctime;
+     if( pctime < DEFAULT_TIME) { // check the value is a valid time (greater than Jan 1 2013)
+       pctime = 0L; // return 0 to indicate that the time is not valid
+     }
+  }
+  return pctime;
+}
 

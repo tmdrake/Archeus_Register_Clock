@@ -38,7 +38,7 @@ Register sec_10(51,50); //10's place sec
 Register sec_1(53,52); //1's place sec
 
 //offset
-int offset = -8;  // Pacific Standard Time (USA)
+int offset = -5;  // Eastern Standard Time (USA)
 
 // the setup function runs once when you press reset or power the board
 void setup() {

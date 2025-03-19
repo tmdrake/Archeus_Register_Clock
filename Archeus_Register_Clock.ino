@@ -24,7 +24,6 @@ Timer t;
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 #define OFFSET_HEADER  "O"   // Header tag for serial time sync message
 
-
 /*
   Output with Registors
 */

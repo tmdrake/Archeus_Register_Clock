@@ -38,6 +38,11 @@ Register sec_1(53,52); //1's place sec
 
 //offset
 int offset = -5;  // Eastern Standard Time (USA)
+bool dst = 1;
+
+//#include <avr/wdt.h>
+
+
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -55,6 +60,7 @@ void setup() {
   sec_10.reset();
   Serial.println("Finished Reset.");
   setSyncProvider(RTC.get);   // the function to get the time from the RTC
+  delay(1000);
     if(timeStatus()!= timeSet) 
      Serial.println("Unable to sync with the RTC.");
   else
@@ -67,11 +73,14 @@ void setup() {
 
   /*Clock service*/
   t.every(1000, digitalClockDisplay);
+  //wdt_enable(WDTO_8S);
 
 }
 
 // the loop function runs over and over again forever
 void loop() {
+  //wdt_reset();
+
   t.update(); //timer service
 
 
@@ -83,6 +92,10 @@ void loop() {
     if (t != 0) {
       //adjustTime(offset * SECS_PER_HOUR);
       t = t + offset * SECS_PER_HOUR;
+      if (dst)
+      {
+        t = t + SECS_PER_HOUR; //one hour advancement if its DST = 1
+      }
       RTC.set(t);   // set the RTC and the system time to the received value
       setTime(t);   //While on the system uses timer library       
     }
@@ -96,6 +109,10 @@ void loop() {
     if (t != 0) {
       //adjustTime(offset * SECS_PER_HOUR);
       t = t + offset * SECS_PER_HOUR;
+      if (dst)
+      {
+        t = t + SECS_PER_HOUR; //one hour advancement if its DST = 1
+      }
       RTC.set(t);   // set the RTC and the system time to the received value
       setTime(t);   //While on the system uses timer library       
     }
@@ -126,17 +143,17 @@ if (timeStatus()!= timeNotSet) {
   Serial.println(); 
 
   /*Send to Register*/
-  Serial.println("H10:");
+  //Serial.println("H10:");
   hour_10.countto((int) hourFormat12() / 10);
-  Serial.println("H01:");
+  //Serial.println("H01:");
   hour_1.countto((int) hourFormat12() % 10); 
-  Serial.println("M10:");
+  //Serial.println("M10:");
   min_10.countto((int) minute() / 10);
-  Serial.println("M01:");
+  //Serial.println("M01:");
   min_1.countto((int) minute() % 10);
-  Serial.println("S10:");
+  //Serial.println("S10:");
   sec_10.countto((int) second() / 10);
-  Serial.println("S01:");
+  //Serial.println("S01:");
   sec_1.countto(second() % 10);
 
   /*Date*/
@@ -183,11 +200,19 @@ unsigned long processSyncMessage() {
     offset = Serial.parseInt();
     Serial.print("Offset:");
     Serial.println(offset);
+    /*TODO save to eeprom*/
+  } else if (buff == 'D' ) {
+    /*Process offset*/
+    dst = Serial.parseInt();
+    Serial.print("DST:");
+    Serial.println(dst);
+    /*TODO save to eeprom*/
 
   } else if (buff == '?') {
     Serial.println("MENU:");
     Serial.println("T<UNIXTIME>");
     Serial.println("O<OFFSET>");
+    Serial.println("D<1/0>");
     
 
   }

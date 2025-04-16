@@ -27,11 +27,12 @@ void Register::reset() {
 void Register::countto(int counto) {
 //figure out the last number, then count to it... otherwise reset and count
 //static int lastnumber = -1;
-Serial.print("Last number:");
+/*Serial.print("Last number:");
 if (lastnumber == 10)
   Serial.println(0);
 else
-  Serial.println(lastnumber);
+  Serial.println(lastnumber);*/
+  
 
 if (counto <= 0)
     counto = 10; //Zero is actually 10
@@ -47,8 +48,8 @@ if (lastnumber == counto){
   // New count is just the difference..
   int difference = counto - lastnumber;
   
-  Serial.print("Move foward:");
-  Serial.println(difference);
+  //Serial.print("Move foward:");
+  //Serial.println(difference);
   lastnumber = counto;
   counto = difference; //to be processed
 
